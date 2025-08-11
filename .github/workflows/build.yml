@@ -11,25 +11,35 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - name: Setup .NET (7.x)
+        uses: actions/setup-dotnet@v3
         with:
-          node-version: '18'
+          dotnet-version: '7.0.x'
 
-      - name: Install dependencies
-        run: npm install
+      - name: Restore dependencies
+        run: dotnet restore src/LawOfficeApp.csproj
 
-      - name: Build project
-        run: npm run build
+      - name: Publish (self-contained single-file)
+        run: dotnet publish src/LawOfficeApp.csproj -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true -o publish
+
+      - name: Show publish files (for debug)
+        run: dir publish
+        shell: powershell
 
       - name: Install Inno Setup
         run: choco install innosetup --no-progress -y
 
-      - name: Build installer
-        run: iscc setup.iss
+      - name: Build installer with Inno Setup
+        run: '"C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer_scripts\lawoffice_installer.iss'
 
-      - name: Upload installer
+      - name: List repository root (for debug)
+        run: dir
+        shell: powershell
+
+      - name: Upload installer artifact
         uses: actions/upload-artifact@v4
         with:
-          name: LawOfficeManagerSetup
-          path: ./dist/LawOfficeManagerSetup.exe
+          name: LawOfficeInstaller
+          path: |
+            **\*.exe
+            publish\**

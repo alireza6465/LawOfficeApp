@@ -1,0 +1,1 @@
+When you run the app, the SQLite DB will be created automatically in your Documents folder.

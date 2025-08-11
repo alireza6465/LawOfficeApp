@@ -17,14 +17,31 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore
 
-      - name: Build
+      - name: Build Release
         run: dotnet publish -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true
 
-      - name: Create installer folder
-        run: mkdir installer && cp -r bin/Release/net8.0-windows/win-x64/publish/* installer/
+      - name: Install Inno Setup
+        run: choco install innosetup --yes
+
+      - name: Create Inno Setup script
+        run: |
+          echo [Setup] > installer.iss
+          echo AppName=Law Office Manager >> installer.iss
+          echo AppVersion=1.0 >> installer.iss
+          echo DefaultDirName={pf}\LawOfficeManager >> installer.iss
+          echo DefaultGroupName=LawOfficeManager >> installer.iss
+          echo OutputBaseFilename=LawOfficeManagerSetup >> installer.iss
+          echo [Files] >> installer.iss
+          echo Source: "bin\Release\net8.0-windows\win-x64\publish\*"; DestDir: "{app}"; Flags: recursesubdirs >> installer.iss
+          echo [Icons] >> installer.iss
+          echo Name: "{group}\Law Office Manager"; Filename: "{app}\LawOfficeManager.exe" >> installer.iss
+          echo Name: "{commondesktop}\Law Office Manager"; Filename: "{app}\LawOfficeManager.exe" >> installer.iss
+
+      - name: Build installer
+        run: iscc installer.iss
 
       - name: Upload installer
         uses: actions/upload-artifact@v3
         with:
-          name: LawOfficeApp
-          path: installer
+          name: LawOfficeManagerSetup
+          path: LawOfficeManagerSetup.exe
